@@ -1,0 +1,38 @@
+<idea-plugin>
+    <id>io.github.xusida.idea.plugins.formatyaml</id>
+    <name>FormatYaml</name>
+    <version>1.0</version>
+    <vendor email="xusida.plus@gmail.com" url="http://xusida.github.io">xusida.github.io</vendor>
+
+    <description><![CDATA[
+      Format yaml file.<br>
+      <em>support folder *.yml *.yaml</em>
+    ]]></description>
+
+    <change-notes><![CDATA[
+      Add change notes here.<br>
+      <em>most HTML tags may be used</em>
+    ]]>
+    </change-notes>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+    <idea-version since-build="145.0"/>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <!-- uncomment to enable plugin in all products
+    <depends>com.intellij.modules.lang</depends>
+    -->
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+    </extensions>
+
+    <actions>
+        <action id="FormatYamlAction" class="FormatYamlAction" text="FormatYaml" description="format yaml file">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Generate"/>
+        </action>
+    </actions>
+
+</idea-plugin>
