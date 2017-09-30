@@ -12,16 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 /**
  * Created by ABC on 16/8/17.
  */
@@ -81,45 +71,18 @@ public class FormatYamlAction extends AnAction {
 	}
 
 	private void formatYaml(VirtualFile file) throws Exception {
-		Map map = readFile(file);
-		String newFileContext = toYaml(new Yaml().load(file.getInputStream()));
-		Scanner scanner = new Scanner(newFileContext);
-		int lineNum = 0;
-		StringBuilder stringBuilder = new StringBuilder();
-		while (scanner.hasNextLine()) {
-			lineNum++;
-			String line = scanner.nextLine();
-			if (map.get(lineNum) != null) {
-				String text = map.get(lineNum).toString().trim();
-				Scanner scanner1 = new Scanner(text);
-				while (scanner1.hasNextLine()) {
-					stringBuilder.append(line.substring(0, startSpaceNum(line)));
-					stringBuilder.append(scanner1.nextLine().trim());
-					stringBuilder.append(file.getDetectedLineSeparator());
+		WriteCommandAction.runWriteCommandAction(mProject, new Runnable() {
+			@Override
+			public void run() {
+				try {
+					file.setBinaryContent(toYaml(new Yaml().load(file.getInputStream())).getBytes(file.getCharset()));
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-				scanner1.close();
 			}
-			stringBuilder.append(line);
-			stringBuilder.append(file.getDetectedLineSeparator());
-		}
-		scanner.close();
-		//校验
-		if (validate(newFileContext, stringBuilder.toString())) {
-			WriteCommandAction.runWriteCommandAction(mProject, new Runnable() {
-				@Override
-				public void run() {
-					try {
-						file.setBinaryContent(stringBuilder.toString().getBytes(file.getCharset()));
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			});
-		} else {
-			log("validate failure, format is uncompleted!");
-		}
-
+		});
 	}
+
 
 	private String toYaml(Object obj) {
 		DumperOptions options = new DumperOptions();
@@ -129,43 +92,4 @@ public class FormatYamlAction extends AnAction {
 		return new Yaml(options).dump(obj);
 	}
 
-	private int startSpaceNum(String s) {
-		for (int i = 0; i < s.length(); i++) {
-			if (s.charAt(i) == ' ') continue;
-			else return i;
-		}
-		return s.length();
-	}
-
-	private Map<Integer, String> readFile(VirtualFile file) {
-		HashMap<Integer, String> map = new HashMap();
-		try (Stream<String> stream = Files.lines(Paths.get(file.getPath()))) {
-			int lineNum = 0;
-			List<String> l = stream.collect(Collectors.toList());
-			for (String line : l) {
-				if (line.trim().length() > 0) {
-					lineNum++;
-					if (line.trim().charAt(0) == '#') {
-						int curNum = lineNum - map.values().size();
-						if (map.get(curNum) != null) {
-							line = map.get(curNum) + file.getDetectedLineSeparator() + line.trim();
-							lineNum--;
-						}
-						map.put(curNum, line.trim());
-
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return map;
-	}
-
-	private boolean validate(String oldYaml, String newYaml) {
-		Yaml yaml = new Yaml();
-		Object oldObj = yaml.load(oldYaml);
-		Object newObj = yaml.load(newYaml);
-		return oldObj.equals(newObj);
-	}
 }
